@@ -7,10 +7,11 @@
 
   <style>
     body {
-      background-image: url('https://img-s-msn-com.akamaized.net/tenant/amp/entityid/AA12sc3Q?w=0&h=0&q=60&m=6&f=jpg&u=t');
+      background-color: #111111;
+      background: radial-gradient(ellipse at top, #777 0%, #000 100%);
       background-size: cover;
       background-position: center;
-      background-repeat: no-repeat; /* fixed typo from "no-repeate" */
+      background-repeat: no-repeat; 
       background-attachment: fixed;
       overflow-y: auto;
       overflow-x: hidden;
@@ -23,11 +24,22 @@
       align-items: center;
       padding: 0;
       margin: 0;
+      animation: pulse-glow 4s ease-in-out infinite;
     }
+
+    
+@keyframes pulse-glow {
+  0%, 100% {
+    background-size: 100% 200%;
+  }
+  50% {
+    background-size: 220% 220%;
+  }
+}
 
     main {
       max-width: 1000px;
-      background-color: #fcfcfc;
+      background-color: rgba(255, 255, 255, .81);
     }
 
     header {
@@ -141,7 +153,7 @@
           <ul>
             <li>Forklift Operator Certification</li>
             <li>Hazardous & Volatile Material Handling</li>
-            <li>First Aid & CPR Trained</li>
+            <li><a href="C:\Users\PUMalottCh\OneDrive - NESTLE\Documents\Certifications\Heartsaver First Aid CPR AED.pdf">First Aid & CPR Trained</a></li>
             <li>TDR (Trailer Dock & Release) Certified</li>
             <li>Microsoft Office Suite Proficiency</li>
             <li>Cleanroom / Safety Protocols (Additive)</li>
@@ -160,7 +172,12 @@
         </ul>
       </div>
     </div>
-
+    <!-- Works -->
+    <div class="works-container">
+      <div>
+        <h3> Works </h3>
+      </div>
+    </div>
     <footer>
       hey
     </footer>
