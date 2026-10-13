@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D Model Spinner GIF Maker</title>
+  <meta name="description" content="Load a 3D model, light and spin it around any axis, and export a small looping GIF for websites." />
+
+  <style>
+    :root {
+      --bg: #141416;
+      --panel: #1d1d21;
+      --panel-2: #26262b;
+      --line: #34343b;
+      --text: #e9e9ec;
+      --muted: #9a9aa3;
+      --accent: #4aa3ff;
+      --accent-2: #2b7fd6;
+      --ok: #3ecf8e;
+      --err: #ff6b6b;
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--bg); }
+    [hidden] { display: none !important; }
+
+    body {
+      margin: 0;
+      background: radial-gradient(ellipse at top, #2a2a2e 0%, var(--bg) 70%);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    header h1 { margin: 0; font-size: 20px; }
+    header p { margin: 0; color: var(--muted); }
+    header a { color: var(--accent); margin-left: auto; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 16px;
+      padding: 16px;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    /* ---------- Viewer ---------- */
+    .viewer-wrap { display: flex; flex-direction: column; gap: 12px; }
+
+    #stage {
+      position: relative;
+      width: min(100%, 70vh);
+      aspect-ratio: 1 / 1;
+      margin: 0 auto;
+      border-radius: 8px;
+      overflow: hidden;
+      /* checkerboard shows transparency */
+      background-color: #2b2b30;
+      background-image:
+        linear-gradient(45deg, #36363c 25%, transparent 25%),
+        linear-gradient(-45deg, #36363c 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #36363c 75%),
+        linear-gradient(-45deg, transparent 75%, #36363c 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+    }
+    #stage canvas { width: 100%; height: 100%; display: block; }
+
+    #drop {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-align: center;
+      padding: 16px;
+      color: var(--muted);
+      border: 2px dashed transparent;
+      border-radius: 8px;
+      transition: border-color .15s, background .15s;
+      pointer-events: none;
+    }
+    #drop.empty { pointer-events: auto; cursor: pointer; border-color: var(--line); background: rgba(0,0,0,.35); }
+    #drop.hover { border-color: var(--accent); background: rgba(74,163,255,.12); pointer-events: auto; }
+    #drop strong { color: var(--text); font-size: 16px; }
+    #drop.hidden { opacity: 0; }
+
+    .status { min-height: 1.2em; color: var(--muted); }
+    .status.err { color: var(--err); }
+    .status.ok { color: var(--ok); }
+
+    .row-buttons { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+    button, .btn {
+      font: inherit;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 12px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    button:hover, .btn:hover { border-color: var(--accent); }
+    button.primary { background: var(--accent-2); border-color: var(--accent-2); color: #fff; font-weight: bold; }
+    button.primary:hover { background: var(--accent); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+
+    progress { width: 100%; height: 8px; accent-color: var(--accent); }
+
+    /* ---------- Result ---------- */
+    #result { display: none; }
+    #result.show { display: block; }
+    #result .preview {
+      display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start;
+    }
+    #result .gif-box {
+      background-color: #2b2b30;
+      background-image:
+        linear-gradient(45deg, #36363c 25%, transparent 25%),
+        linear-gradient(-45deg, #36363c 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #36363c 75%),
+        linear-gradient(-45deg, transparent 75%, #36363c 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+      border-radius: 6px;
+      line-height: 0;
+      max-width: 100%;
+    }
+    #result img { max-width: 100%; height: auto; }
+    #result .meta { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 8px; }
+    #result textarea {
+      width: 100%; min-height: 64px; resize: vertical;
+      background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px;
+      font-family: Consolas, monospace; font-size: 12px; padding: 6px;
+    }
+    .big { font-size: 20px; font-weight: bold; }
+
+    /* ---------- Controls ---------- */
+    .controls { display: flex; flex-direction: column; gap: 12px; }
+    fieldset {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin: 0;
+      padding: 10px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    legend { color: var(--accent); font-weight: bold; padding: 0 6px; }
+
+    .field { display: grid; grid-template-columns: 110px 1fr auto; gap: 8px; align-items: center; }
+    .field label { color: var(--muted); }
+    .field output { min-width: 42px; text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
+    .field.two { grid-template-columns: 110px 1fr; }
+
+    input[type=range] { width: 100%; accent-color: var(--accent); }
+    select, input[type=number], input[type=text] {
+      font: inherit; width: 100%;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--line); border-radius: 5px; padding: 5px 6px;
+    }
+    input[type=color] { width: 100%; height: 30px; border: 1px solid var(--line); border-radius: 5px; background: var(--bg); padding: 2px; }
+    input[type=checkbox] { accent-color: var(--accent); }
+
+    .seg { display: flex; gap: 4px; flex-wrap: wrap; }
+    .seg button { padding: 5px 9px; flex: 1; }
+    .seg button.on { background: var(--accent-2); border-color: var(--accent-2); color: #fff; }
+
+    .xyz { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+    .hint { color: var(--muted); font-size: 12px; margin: 0; }
+    .check { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+        "gifenc": "https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <header>
+    <h1>3D Model Spinner → GIF</h1>
+    <p>Load a model, light it, spin it on any axis, export a small looping GIF.</p>
+    <a href="../">← Back to portfolio</a>
+  </header>
+
+  <div class="layout">
+    <!-- Viewer -->
+    <div class="viewer-wrap">
+      <div class="card">
+        <div id="stage">
+          <div id="drop" class="empty">
+            <strong>Drop a 3D model here</strong>
+            <span>or click to choose a file</span>
+            <span class="hint">STL · OBJ (+MTL) · GLB / GLTF · 3MF · PLY · FBX</span>
+            <span class="hint">For OBJ+MTL or GLTF+BIN+textures, select all files together.</span>
+          </div>
+        </div>
+        <input id="file" type="file" multiple hidden
+               accept=".stl,.obj,.mtl,.glb,.gltf,.bin,.3mf,.ply,.fbx,.png,.jpg,.jpeg,.webp" />
+      </div>
+
+      <div class="card">
+        <div class="row-buttons">
+          <button id="btnOpen">Open model…</button>
+          <button id="btnRecord" class="primary" disabled>Record GIF</button>
+          <button id="btnCancel" hidden>Cancel</button>
+          <span id="estimate" class="hint"></span>
+        </div>
+        <progress id="progress" value="0" max="1" hidden></progress>
+        <p id="status" class="status">No model loaded.</p>
+      </div>
+
+      <div id="result" class="card">
+        <div class="preview">
+          <div class="gif-box"><img id="gifImg" alt="Spinning 3D model preview" /></div>
+          <div class="meta">
+            <div><span id="gifSize" class="big"></span> <span id="gifDims" class="hint"></span></div>
+            <div class="row-buttons">
+              <a id="gifDownload" class="btn" download="model-spin.gif">Download GIF</a>
+            </div>
+            <label class="hint" for="embed">Embed snippet</label>
+            <textarea id="embed" readonly></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls card">
+      <fieldset>
+        <legend>Motion</legend>
+        <div class="field two">
+          <label>Spin axis</label>
+          <div class="seg" id="axisSeg">
+            <button data-axis="0,1,0" class="on">Y (turntable)</button>
+            <button data-axis="1,0,0">X</button>
+            <button data-axis="0,0,1">Z</button>
+            <button data-axis="custom">Custom</button>
+          </div>
+        </div>
+        <div class="field two" id="customAxisRow" hidden>
+          <label>Axis vector</label>
+          <div class="xyz">
+            <input id="axX" type="number" step="0.1" value="0" title="X" />
+            <input id="axY" type="number" step="0.1" value="1" title="Y" />
+            <input id="axZ" type="number" step="0.1" value="0" title="Z" />
+          </div>
+        </div>
+        <div class="field two">
+          <label>Mode</label>
+          <select id="mode">
+            <option value="spin">Full rotation (360°)</option>
+            <option value="swing">Swing back and forth</option>
+          </select>
+        </div>
+        <div class="field" id="swingRow" hidden>
+          <label for="swing">Swing angle</label>
+          <input id="swing" type="range" min="5" max="180" value="35" />
+          <output for="swing"></output>
+        </div>
+        <div class="field two">
+          <label>Direction</label>
+          <select id="direction">
+            <option value="1">Counter-clockwise</option>
+            <option value="-1">Clockwise</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="duration">Loop length</label>
+          <input id="duration" type="range" min="1" max="10" step="0.5" value="3" />
+          <output for="duration"></output>
+        </div>
+        <div class="field">
+          <label for="fps">Frame rate</label>
+          <input id="fps" type="range" min="8" max="30" step="1" value="12" />
+          <output for="fps"></output>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Model &amp; camera</legend>
+        <div class="field two">
+          <label>Up axis</label>
+          <select id="upAxis">
+            <option value="auto">Auto (Z-up for STL/3MF)</option>
+            <option value="y">Y-up</option>
+            <option value="z">Z-up</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="elevation">Camera tilt</label>
+          <input id="elevation" type="range" min="-89" max="89" value="20" />
+          <output for="elevation"></output>
+        </div>
+        <div class="field">
+          <label for="zoom">Zoom</label>
+          <input id="zoom" type="range" min="0.6" max="2.5" step="0.05" value="1.1" />
+          <output for="zoom"></output>
+        </div>
+        <div class="field">
+          <label for="fov">Lens (FOV)</label>
+          <input id="fov" type="range" min="10" max="75" value="30" />
+          <output for="fov"></output>
+        </div>
+        <div class="field two">
+          <label>Start pose</label>
+          <div class="xyz">
+            <input id="rotX" type="number" step="15" value="0" title="Pre-rotate X°" />
+            <input id="rotY" type="number" step="15" value="0" title="Pre-rotate Y°" />
+            <input id="rotZ" type="number" step="15" value="0" title="Pre-rotate Z°" />
+          </div>
+        </div>
+        <p class="hint">Start pose pre-rotates the model (degrees about X / Y / Z) before spinning.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Material</legend>
+        <div class="field two">
+          <label>Source</label>
+          <select id="matSource">
+            <option value="auto">Auto (file colours if present)</option>
+            <option value="override">Always use colour below</option>
+          </select>
+        </div>
+        <div class="field two">
+          <label for="matColor">Colour</label>
+          <input id="matColor" type="color" value="#c9ccd3" />
+        </div>
+        <div class="field">
+          <label for="metal">Metalness</label>
+          <input id="metal" type="range" min="0" max="1" step="0.05" value="0.1" />
+          <output for="metal"></output>
+        </div>
+        <div class="field">
+          <label for="rough">Roughness</label>
+          <input id="rough" type="range" min="0" max="1" step="0.05" value="0.45" />
+          <output for="rough"></output>
+        </div>
+        <label class="check"><input id="flat" type="checkbox" /> Flat shading (faceted look)</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Lighting</legend>
+        <div class="field two">
+          <label>Preset</label>
+          <select id="lightPreset">
+            <option value="studio">Studio (3-point)</option>
+            <option value="soft">Soft / even</option>
+            <option value="dramatic">Dramatic</option>
+            <option value="top">Top-down</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="lightInt">Brightness</label>
+          <input id="lightInt" type="range" min="0.2" max="3" step="0.05" value="1" />
+          <output for="lightInt"></output>
+        </div>
+        <div class="field">
+          <label for="envInt">Reflections</label>
+          <input id="envInt" type="range" min="0" max="2" step="0.05" value="0.6" />
+          <output for="envInt"></output>
+        </div>
+        <label class="check"><input id="lightFollows" type="checkbox" checked /> Lights stay fixed to camera</label>
+        <label class="check"><input id="shadow" type="checkbox" /> Ground shadow</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>GIF output</legend>
+        <div class="field two">
+          <label>Size (px)</label>
+          <select id="size">
+            <option value="200">200 × 200</option>
+            <option value="256">256 × 256</option>
+            <option value="320" selected>320 × 320</option>
+            <option value="400">400 × 400</option>
+            <option value="512">512 × 512</option>
+            <option value="640">640 × 640</option>
+          </select>
+        </div>
+        <div class="field two">
+          <label>Background</label>
+          <select id="bgMode">
+            <option value="transparent">Transparent</option>
+            <option value="color">Solid colour</option>
+          </select>
+        </div>
+        <div class="field two" id="bgColorRow" hidden>
+          <label for="bgColor">BG colour</label>
+          <input id="bgColor" type="color" value="#ffffff" />
+        </div>
+        <div class="field two">
+          <label>Colours</label>
+          <select id="colors">
+            <option value="32">32 (smallest)</option>
+            <option value="64" selected>64</option>
+            <option value="128">128</option>
+            <option value="256">256 (best quality)</option>
+          </select>
+        </div>
+        <div class="field two">
+          <label>Anti-alias</label>
+          <select id="ssaa">
+            <option value="1">Off</option>
+            <option value="2" selected>2× supersample</option>
+            <option value="3">3× supersample</option>
+          </select>
+        </div>
+        <p class="hint">Transparent GIFs have hard 1-bit edges. If you know your site's background colour,
+          a solid background gives smoother edges and usually a smaller file.</p>
+      </fieldset>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+    import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+    import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { ThreeMFLoader } from 'three/addons/loaders/3MFLoader.js';
+    import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
+    import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+    import { GIFEncoder, quantize, applyPalette } from 'gifenc';
+
+    const $ = (id) => document.getElementById(id);
+    const MODEL_EXTS = ['stl', 'obj', 'glb', 'gltf', '3mf', 'ply', 'fbx'];
+
+    // ------------------------------------------------------------------
+    // Renderer / scene
+    // ------------------------------------------------------------------
+    const stage = $('stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    stage.prepend(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const envTexture = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+    scene.environment = envTexture;
+
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
+    scene.add(camera);
+
+    // spinner: rotated each frame about the chosen axis
+    // posed:   the user's "start pose" pre-rotation
+    // upFix:   converts Z-up files to Y-up
+    // content: the loaded, centred and unit-scaled model
+    const spinner = new THREE.Group();
+    const posed = new THREE.Group();
+    const upFix = new THREE.Group();
+    spinner.add(posed);
+    posed.add(upFix);
+    scene.add(spinner);
+
+    // Lights live in a rig that can be parented to the camera (fixed relative to view)
+    const lightRig = new THREE.Group();
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x444450, 0.6);
+    const key = new THREE.DirectionalLight(0xffffff, 2.2);
+    const fill = new THREE.DirectionalLight(0xdfe8ff, 0.8);
+    const rim = new THREE.DirectionalLight(0xffffff, 1.4);
+    lightRig.add(hemi, key, fill, rim);
+    [key, fill, rim].forEach((l) => lightRig.add(l.target));
+    scene.add(lightRig);
+
+    // Dedicated overhead light for the ground shadow, so it always falls under the model
+    const shadowLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    shadowLight.position.set(0.4, 6, 0.6);
+    shadowLight.castShadow = true;
+    shadowLight.visible = false;
+    shadowLight.shadow.mapSize.set(1024, 1024);
+    shadowLight.shadow.camera.left = shadowLight.shadow.camera.bottom = -1.6;
+    shadowLight.shadow.camera.right = shadowLight.shadow.camera.top = 1.6;
+    shadowLight.shadow.camera.near = 1;
+    shadowLight.shadow.camera.far = 10;
+    shadowLight.shadow.bias = -0.0005;
+    shadowLight.shadow.radius = 6;
+    scene.add(shadowLight, shadowLight.target);
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(20, 20),
+      new THREE.ShadowMaterial({ opacity: 0.3 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    ground.visible = false;
+    scene.add(ground);
+
+    const LIGHT_PRESETS = {
+      // positions are in camera-relative "view" space: x right, y up, z towards viewer
+      studio:   { hemi: 0.55, key: [2.2, [3, 4, 4]],   fill: [0.8, [-4, 1, 3]],  rim: [1.4, [-1, 3, -5]] },
+      soft:     { hemi: 1.1,  key: [1.2, [2, 3, 5]],   fill: [1.0, [-3, 2, 4]],  rim: [0.6, [0, 2, -5]] },
+      dramatic: { hemi: 0.15, key: [3.2, [5, 3, 1]],   fill: [0.2, [-4, 0, 3]],  rim: [2.5, [-3, 3, -4]] },
+      top:      { hemi: 0.45, key: [2.6, [0.5, 6, 1]], fill: [0.5, [-3, 1, 3]],  rim: [1.0, [0, 2, -5]] },
+    };
+
+    // ------------------------------------------------------------------
+    // State
+    // ------------------------------------------------------------------
+    let content = null;          // Object3D currently displayed
+    let modelExt = null;
+    let modelName = 'model';
+    let modelRadius = 1;         // after normalisation, bounding sphere radius == 1
+    const originalMaterials = new Map(); // mesh -> original material(s)
+    let recording = false;
+    let cancelRequested = false;
+
+    // ------------------------------------------------------------------
+    // Settings helpers
+    // ------------------------------------------------------------------
+    const num = (id) => parseFloat($(id).value);
+
+    function getAxis() {
+      const on = document.querySelector('#axisSeg button.on').dataset.axis;
+      let v;
+      if (on === 'custom') v = new THREE.Vector3(num('axX') || 0, num('axY') || 0, num('axZ') || 0);
+      else v = new THREE.Vector3(...on.split(',').map(Number));
+      if (v.lengthSq() < 1e-8) v.set(0, 1, 0);
+      return v.normalize();
+    }
+
+    // angle (radians) for a loop phase t in [0, 1). Both modes loop seamlessly.
+    function angleAt(t) {
+      const dir = num('direction');
+      if ($('mode').value === 'swing') {
+        return dir * THREE.MathUtils.degToRad(num('swing')) * Math.sin(2 * Math.PI * t);
+      }
+      return dir * 2 * Math.PI * t;
+    }
+
+    function frameCount() { return Math.max(2, Math.round(num('duration') * num('fps'))); }
+
+    // ------------------------------------------------------------------
+    // Applying settings to the scene
+    // ------------------------------------------------------------------
+    function applyUpAxis() {
+      let up = $('upAxis').value;
+      if (up === 'auto') up = (modelExt === 'stl' || modelExt === '3mf') ? 'z' : 'y';
+      upFix.rotation.set(up === 'z' ? -Math.PI / 2 : 0, 0, 0);
+    }
+
+    function applyPose() {
+      const d = THREE.MathUtils.degToRad;
+      posed.rotation.set(d(num('rotX') || 0), d(num('rotY') || 0), d(num('rotZ') || 0), 'XYZ');
+    }
+
+    function updateGround() {
+      if (!content) return;
+      // lowest point the model can ever reach while spinning is -radius
+      ground.position.y = -modelRadius - 0.001;
+      ground.visible = shadowLight.visible = $('shadow').checked;
+    }
+
+    function applyCamera() {
+      camera.fov = num('fov');
+      camera.aspect = 1;
+      camera.updateProjectionMatrix();
+      // Fit bounding sphere (radius 1) whatever the rotation, then apply zoom
+      const half = THREE.MathUtils.degToRad(camera.fov / 2);
+      const dist = (modelRadius / Math.sin(half)) / num('zoom');
+      const el = THREE.MathUtils.degToRad(num('elevation'));
+      camera.position.set(0, Math.sin(el) * dist, Math.cos(el) * dist);
+      camera.lookAt(0, 0, 0);
+      camera.near = Math.max(0.01, dist - modelRadius * 3);
+      camera.far = dist + modelRadius * 10;
+      camera.updateProjectionMatrix();
+      applyLights();
+    }
+
+    function applyLights() {
+      const p = LIGHT_PRESETS[$('lightPreset').value];
+      const k = num('lightInt');
+      hemi.intensity = p.hemi * k;
+      const set = (light, [inten, pos]) => {
+        light.intensity = inten * k;
+        light.position.set(...pos);
+        light.target.position.set(0, 0, 0);
+      };
+      set(key, p.key); set(fill, p.fill); set(rim, p.rim);
+
+      // Rig orientation: follow camera, or stay fixed in world (front view)
+      lightRig.quaternion.copy($('lightFollows').checked ? camera.quaternion : new THREE.Quaternion());
+      lightRig.updateMatrixWorld(true);
+      setEnvIntensity(num('envInt'));
+    }
+
+    function setEnvIntensity(v) {
+      if (!content) return;
+      content.traverse((o) => {
+        if (!o.isMesh) return;
+        const mats = Array.isArray(o.material) ? o.material : [o.material];
+        mats.forEach((m) => { if ('envMapIntensity' in m) m.envMapIntensity = v; });
+      });
+    }
+
+    function makeMaterial(hasVertexColors) {
+      return new THREE.MeshStandardMaterial({
+        color: hasVertexColors ? 0xffffff : new THREE.Color($('matColor').value),
+        metalness: num('metal'),
+        roughness: num('rough'),
+        flatShading: $('flat').checked,
+        vertexColors: !!hasVertexColors,
+        side: THREE.DoubleSide,
+        envMapIntensity: num('envInt'),
+      });
+    }
+
+    // Decide per mesh whether to keep the file's material or use our own
+    function applyMaterials() {
+      if (!content) return;
+      const override = $('matSource').value === 'override';
+      content.traverse((o) => {
+        if (!o.isMesh) return;
+        const orig = originalMaterials.get(o);
+        const hasVC = !!o.geometry.attributes.color;
+        if (!override && orig && orig.meaningful) {
+          o.material = orig.material;
+          const mats = Array.isArray(o.material) ? o.material : [o.material];
+          mats.forEach((m) => { m.flatShading = $('flat').checked; m.needsUpdate = true; });
+        } else {
+          if (o.userData.ownMat) o.userData.ownMat.dispose();
+          o.material = makeMaterial(hasVC && !override);
+          o.userData.ownMat = o.material;
+        }
+        o.castShadow = true;
+        o.receiveShadow = true;
+      });
+      setEnvIntensity(num('envInt'));
+    }
+
+    function applyBackground() {
+      const transparent = $('bgMode').value === 'transparent';
+      $('bgColorRow').hidden = transparent;
+      if (transparent) { scene.background = null; renderer.setClearColor(0x000000, 0); }
+      else { scene.background = new THREE.Color($('bgColor').value); }
+    }
+
+    // ------------------------------------------------------------------
+    // Model loading
+    // ------------------------------------------------------------------
+    function setStatus(msg, kind = '') {
+      const s = $('status');
+      s.textContent = msg;
+      s.className = 'status ' + kind;
+    }
+
+    async function loadFiles(fileList) {
+      const files = [...fileList];
+      const main = files.find((f) => MODEL_EXTS.includes(ext(f.name)));
+      if (!main) { setStatus('No supported model file found in selection.', 'err'); return; }
+
+      // Map every selected file by basename so loaders can resolve sidecar files (MTL, BIN, textures)
+      const urls = new Map();
+      files.forEach((f) => urls.set(f.name.toLowerCase(), URL.createObjectURL(f)));
+      const manager = new THREE.LoadingManager();
+      manager.setURLModifier((url) => {
+        if (url.startsWith('data:')) return url;
+        const base = decodeURIComponent(url.split(/[\\/]/).pop().split('?')[0]).toLowerCase();
+        return urls.get(base) || url;
+      });
+
+      const e = ext(main.name);
+      const mainUrl = urls.get(main.name.toLowerCase());
+      setStatus(`Loading ${main.name}…`);
+
+      try {
+        let obj;
+        if (e === 'stl') {
+          const geo = await new STLLoader(manager).loadAsync(mainUrl);
+          obj = new THREE.Mesh(geo);
+          originalMaterials.set(obj, null);
+        } else if (e === 'ply') {
+          const geo = await new PLYLoader(manager).loadAsync(mainUrl);
+          if (!geo.attributes.normal) geo.computeVertexNormals();
+          obj = new THREE.Mesh(geo);
+          originalMaterials.set(obj, null);
+        } else if (e === 'obj') {
+          const text = await main.text();
+          const loader = new OBJLoader(manager);
+          const mtlName = (text.match(/^\s*mtllib\s+(.+?)\s*$/m) || [])[1];
+          const mtlFile = mtlName && files.find((f) => f.name.toLowerCase() === mtlName.split(/[\\/]/).pop().toLowerCase());
+          if (mtlFile) {
+            const mtl = await new MTLLoader(manager).loadAsync(urls.get(mtlFile.name.toLowerCase()));
+            mtl.preload();
+            loader.setMaterials(mtl);
+          }
+          obj = loader.parse(text);
+          obj.traverse((o) => {
+            if (o.isMesh && !o.geometry.attributes.normal) o.geometry.computeVertexNormals();
+          });
+          markMaterials(obj, !!mtlFile);
+        } else if (e === 'glb' || e === 'gltf') {
+          const gltf = await new GLTFLoader(manager).loadAsync(mainUrl);
+          obj = gltf.scene;
+          markMaterials(obj, true);
+        } else if (e === '3mf') {
+          obj = await new ThreeMFLoader(manager).loadAsync(mainUrl);
+          markMaterials(obj, true);
+        } else if (e === 'fbx') {
+          obj = await new FBXLoader(manager).loadAsync(mainUrl);
+          markMaterials(obj, true);
+        }
+
+        setModel(obj, e, main.name);
+        let tris = 0;
+        obj.traverse((o) => {
+          if (o.isMesh) tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3;
+        });
+        setStatus(`Loaded ${main.name} — ${Math.round(tris).toLocaleString()} triangles.`, 'ok');
+      } catch (err) {
+        console.error(err);
+        setStatus(`Could not load ${main.name}: ${err.message || err}`, 'err');
+      } finally {
+        // keep URLs alive briefly for late texture loads, then free them
+        setTimeout(() => urls.forEach((u) => URL.revokeObjectURL(u)), 30000);
+      }
+    }
+
+    // Remember original materials. A material is "meaningful" if the file really provided
+    // one (not a loader default), so Auto mode keeps it.
+    function markMaterials(obj, fileHasMaterials) {
+      obj.traverse((o) => {
+        if (!o.isMesh) return;
+        originalMaterials.set(o, fileHasMaterials ? { material: o.material, meaningful: true } : null);
+      });
+    }
+
+    function setModel(obj, e, name) {
+      if (content) {
+        upFix.remove(content);
+        content.traverse((o) => {
+          if (o.isMesh) {
+            o.geometry.dispose();
+            if (o.userData.ownMat) o.userData.ownMat.dispose();
+          }
+        });
+      }
+      content = obj;
+      modelExt = e;
+      modelName = name.replace(/\.[^.]+$/, '') || 'model';
+
+      // Normalise: centre on the origin and scale so the bounding sphere has radius 1.
+      // Every rotation (up fix, start pose, spin) then pivots about the model's centre
+      // and the model always stays inside the camera framing.
+      content.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(content);
+      const sphere = box.getBoundingSphere(new THREE.Sphere());
+      const s = sphere.radius > 0 ? 1 / sphere.radius : 1;
+      content.scale.multiplyScalar(s);
+      content.position.sub(sphere.center).multiplyScalar(s);
+      upFix.add(content);
+      modelRadius = 1;
+
+      applyUpAxis();
+      applyMaterials();
+      applyPose();
+      updateGround();
+      applyCamera();
+      applyBackground();
+
+      $('drop').className = 'hidden';
+      $('btnRecord').disabled = false;
+      $('result').classList.remove('show');
+      updateEstimate();
+    }
+
+    const ext = (n) => (n.split('.').pop() || '').toLowerCase();
+
+    // ------------------------------------------------------------------
+    // Preview loop
+    // ------------------------------------------------------------------
+    function resizePreview() {
+      const r = stage.getBoundingClientRect();
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(r.width, r.height, false);
+    }
+    new ResizeObserver(() => { if (!recording) resizePreview(); }).observe(stage);
+
+    const clock = new THREE.Clock();
+    function poseAt(t) {
+      spinner.quaternion.setFromAxisAngle(getAxis(), angleAt(t));
+    }
+    function tick() {
+      requestAnimationFrame(tick);
+      if (recording) return;
+      if (content) {
+        const loop = num('duration');
+        poseAt((clock.getElapsedTime() % loop) / loop);
+      }
+      renderer.render(scene, camera);
+    }
+
+    // ------------------------------------------------------------------
+    // Recording → GIF
+    // ------------------------------------------------------------------
+    async function record() {
+      if (!content || recording) return;
+      recording = true;
+      cancelRequested = false;
+      $('btnRecord').disabled = true;
+      $('btnCancel').hidden = false;
+      const prog = $('progress');
+      prog.hidden = false;
+      prog.value = 0;
+
+      const size = parseInt($('size').value, 10);
+      const ss = parseInt($('ssaa').value, 10);
+      const n = frameCount();
+      const fps = num('fps');
+      const delay = 1000 / fps;
+      const maxColors = parseInt($('colors').value, 10);
+      const transparent = $('bgMode').value === 'transparent';
+
+      // render at size*ss into the WebGL canvas, then downsample into a 2D canvas
+      const prevRatio = renderer.getPixelRatio();
+      renderer.setPixelRatio(1);
+      renderer.setSize(size * ss, size * ss, false);
+      const out = document.createElement('canvas');
+      out.width = out.height = size;
+      const ctx = out.getContext('2d', { willReadFrequently: true });
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
+      const frames = [];
+      try {
+        // Pass 1: render frames
+        for (let i = 0; i < n; i++) {
+          if (cancelRequested) throw new Error('cancelled');
+          poseAt(i / n);
+          renderer.render(scene, camera);
+          ctx.clearRect(0, 0, size, size);
+          ctx.drawImage(renderer.domElement, 0, 0, size, size);
+          const data = ctx.getImageData(0, 0, size, size).data;
+          if (transparent) hardenAlpha(data);
+          frames.push(data);
+          prog.value = (i + 1) / n * 0.5;
+          setStatus(`Rendering frame ${i + 1} / ${n}…`);
+          if (i % 4 === 3) await nextFrame();
+        }
+
+        // Pass 2: one global palette built from a sample of all frames
+        setStatus('Building colour palette…');
+        await nextFrame();
+        const sample = samplePixels(frames, 400000);
+        let palette, transparentIndex;
+        if (transparent) {
+          palette = quantize(sample, maxColors, { format: 'rgba4444', oneBitAlpha: true, clearAlpha: true });
+          transparentIndex = palette.findIndex((c) => c[3] === 0);
+          if (transparentIndex < 0) { palette.push([0, 0, 0, 0]); transparentIndex = palette.length - 1; }
+        } else {
+          // reserve one slot as the "unchanged pixel" index used for inter-frame compression
+          palette = quantize(sample, maxColors - 1, { format: 'rgb444' });
+          palette.push([0, 0, 0]);
+          transparentIndex = palette.length - 1;
+        }
+
+        // Pass 3: encode
+        const gif = GIFEncoder();
+        // 4 bits per channel for colour matching: visually identical at GIF palette sizes,
+        // but more stable between frames, so more pixels repeat and compress away
+        const format = transparent ? 'rgba4444' : 'rgb444';
+        let prev = null;
+        for (let i = 0; i < n; i++) {
+          if (cancelRequested) throw new Error('cancelled');
+          const index = applyPalette(frames[i], palette, format);
+          if (transparent) {
+            // every frame fully replaces the previous one (dispose = restore to background)
+            gif.writeFrame(index, size, size, {
+              palette: i === 0 ? palette : undefined,
+              delay, transparent: true, transparentIndex, dispose: 2,
+            });
+          } else {
+            // pixels identical to the previous frame become transparent → compresses much better
+            const enc = index.slice();
+            if (prev) for (let p = 0; p < enc.length; p++) if (index[p] === prev[p]) enc[p] = transparentIndex;
+            gif.writeFrame(enc, size, size, {
+              palette: i === 0 ? palette : undefined,
+              delay, transparent: i > 0, transparentIndex, dispose: 1,
+            });
+            prev = index;
+          }
+          prog.value = 0.5 + (i + 1) / n * 0.5;
+          setStatus(`Encoding frame ${i + 1} / ${n}…`);
+          if (i % 4 === 3) await nextFrame();
+        }
+        gif.finish();
+        showResult(gif.bytes(), size, n, fps);
+        setStatus('Done!', 'ok');
+      } catch (err) {
+        if (err.message === 'cancelled') setStatus('Recording cancelled.');
+        else { console.error(err); setStatus('Recording failed: ' + (err.message || err), 'err'); }
+      } finally {
+        recording = false;
+        renderer.setPixelRatio(prevRatio);
+        resizePreview();
+        prog.hidden = true;
+        $('btnRecord').disabled = false;
+        $('btnCancel').hidden = true;
+      }
+    }
+
+    // GIF transparency is 1-bit: make every pixel fully opaque or fully transparent
+    function hardenAlpha(d) {
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] < 128) { d[i] = d[i + 1] = d[i + 2] = d[i + 3] = 0; }
+        else d[i + 3] = 255;
+      }
+    }
+
+    function samplePixels(frames, maxPixels) {
+      const per = frames[0].length / 4;
+      const total = per * frames.length;
+      const step = Math.max(1, Math.floor(total / maxPixels));
+      const outPx = Math.ceil(total / step);
+      const outBuf = new Uint8Array(outPx * 4);
+      let o = 0;
+      for (let g = 0; g < total && o < outBuf.length; g += step) {
+        const f = frames[Math.floor(g / per)];
+        const p = (g % per) * 4;
+        outBuf[o++] = f[p]; outBuf[o++] = f[p + 1]; outBuf[o++] = f[p + 2]; outBuf[o++] = f[p + 3];
+      }
+      return outBuf.subarray(0, o);
+    }
+
+    let lastUrl = null;
+    function showResult(bytes, size, n, fps) {
+      if (lastUrl) URL.revokeObjectURL(lastUrl);
+      const blob = new Blob([bytes], { type: 'image/gif' });
+      lastUrl = URL.createObjectURL(blob);
+      const file = `${modelName}-spin.gif`;
+      $('gifImg').src = lastUrl;
+      $('gifDownload').href = lastUrl;
+      $('gifDownload').download = file;
+      $('gifSize').textContent = formatBytes(bytes.length);
+      $('gifDims').textContent = `${size}×${size}px · ${n} frames · ${fps} fps · ${(n / fps).toFixed(1)}s loop`;
+      $('embed').value = `<img src="${file}" width="${size}" height="${size}" alt="${modelName} 3D model" loading="lazy">`;
+      $('result').classList.add('show');
+      $('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    const formatBytes = (b) => b < 1024 ? `${b} B` : b < 1048576 ? `${(b / 1024).toFixed(1)} KB` : `${(b / 1048576).toFixed(2)} MB`;
+    const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
+
+    function updateEstimate() {
+      $('estimate').textContent = `${frameCount()} frames · ${$('size').value}px`;
+    }
+
+    // ------------------------------------------------------------------
+    // UI wiring
+    // ------------------------------------------------------------------
+    // live value readouts on sliders
+    const fmt = {
+      swing: (v) => `±${v}°`, duration: (v) => `${v}s`, fps: (v) => `${v}`,
+      elevation: (v) => `${v}°`, zoom: (v) => `${(+v).toFixed(2)}×`, fov: (v) => `${v}°`,
+      metal: (v) => (+v).toFixed(2), rough: (v) => (+v).toFixed(2),
+      lightInt: (v) => `${(+v).toFixed(2)}×`, envInt: (v) => (+v).toFixed(2),
+    };
+    document.querySelectorAll('input[type=range]').forEach((r) => {
+      const out = document.querySelector(`output[for=${r.id}]`);
+      const upd = () => { if (out) out.textContent = (fmt[r.id] || ((v) => v))(r.value); };
+      r.addEventListener('input', upd);
+      upd();
+    });
+
+    const on = (ids, evt, fn) => ids.split(' ').forEach((id) => $(id).addEventListener(evt, fn));
+    on('elevation zoom fov', 'input', applyCamera);
+    on('lightPreset lightFollows', 'change', applyLights);
+    on('lightInt envInt', 'input', applyLights);
+    on('matSource flat', 'change', applyMaterials);
+    on('matColor metal rough', 'input', applyMaterials);
+    on('upAxis', 'change', applyUpAxis);
+    on('rotX rotY rotZ', 'input', applyPose);
+    on('bgMode bgColor', 'input', applyBackground);
+    on('shadow', 'change', updateGround);
+    on('duration fps size', 'input', updateEstimate);
+    on('mode', 'change', () => { $('swingRow').hidden = $('mode').value !== 'swing'; });
+
+    document.querySelectorAll('#axisSeg button').forEach((b) => b.addEventListener('click', () => {
+      document.querySelectorAll('#axisSeg button').forEach((x) => x.classList.toggle('on', x === b));
+      $('customAxisRow').hidden = b.dataset.axis !== 'custom';
+    }));
+
+    // file open / drag & drop
+    $('btnOpen').addEventListener('click', () => $('file').click());
+    $('drop').addEventListener('click', () => $('file').click());
+    $('file').addEventListener('change', (e) => { if (e.target.files.length) loadFiles(e.target.files); e.target.value = ''; });
+
+    let dragDepth = 0;
+    window.addEventListener('dragenter', (e) => { e.preventDefault(); dragDepth++; $('drop').classList.add('hover'); });
+    window.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; $('drop').classList.remove('hover'); } });
+    window.addEventListener('dragover', (e) => e.preventDefault());
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dragDepth = 0;
+      $('drop').classList.remove('hover');
+      if (e.dataTransfer.files.length) loadFiles(e.dataTransfer.files);
+    });
+
+    $('btnRecord').addEventListener('click', record);
+    $('btnCancel').addEventListener('click', () => { cancelRequested = true; });
+
+    // expose for automation / debugging
+    window.spinnerApp = { loadFiles, record };
+
+    applyBackground();
+    applyCamera();
+    resizePreview();
+    tick();
+  </script>
+</body>
+</html>
