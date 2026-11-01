@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Veil",
+  "version": "1.0.0",
+  "description": "Covers the page with a slowly shifting color gradient and a clock whenever your mouse leaves the window.",
+  "permissions": ["storage"],
+  "action": {
+    "default_title": "Veil",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ]
+}
