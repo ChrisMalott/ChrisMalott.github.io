@@ -1,0 +1,11 @@
+
+      <h1>About {{siteName}}</h1>
+      <article class="info">
+        <p>{{siteName}} is a small collection of free, single-purpose media converters. Each page does one job – like turning an MP4 into a GIF or a MOV into an MP4 – with sensible defaults and only the settings that matter.</p>
+        <h2>How it works</h2>
+        <p>The converters use <a href="https://ffmpeg.org/">FFmpeg</a>, compiled to WebAssembly by the open-source <a href="https://github.com/ffmpegwasm/ffmpeg.wasm">ffmpeg.wasm</a> project. When you press Convert, your browser downloads the FFmpeg engine from this site and runs it locally in a background worker. Your file is read straight from your disk into that worker, converted, and handed back to you as a download. It is never sent over the network.</p>
+        <h2>Limits</h2>
+        <p>Because everything happens in your browser's memory, files are limited to {{maxFileMB}} MB, and speed depends on your device. The engine runs on a single processor core so that the site works in every browser without special server configuration.</p>
+        <h2>Free to use</h2>
+        <p>The site is supported by advertising. There are no accounts, watermarks or daily limits. See the <a href="{{base}}privacy/">privacy policy</a> for details, and the <a href="{{base}}credits/">open-source credits</a> for the software that makes it possible.</p>
+      </article>

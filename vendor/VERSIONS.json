@@ -1,0 +1,4 @@
+{
+  "@ffmpeg/ffmpeg": "0.12.15",
+  "@ffmpeg/core": "0.12.10"
+}

@@ -1,0 +1,22 @@
+
+      <h1>Open-Source Credits</h1>
+      <article class="info">
+        <p>{{siteName}} is built on free and open-source software. Thank you to everyone who works on these projects.</p>
+
+        <h2>FFmpeg</h2>
+        <p>This site uses <a href="https://ffmpeg.org/">FFmpeg</a> (version n5.1.4), a complete, cross-platform solution to record, convert and stream audio and video. FFmpeg is a trademark of Fabrice Bellard, originator of the FFmpeg project. This site is not affiliated with or endorsed by the FFmpeg project.</p>
+        <p>FFmpeg is licensed under the GNU Lesser General Public License (LGPL) version 2.1 or later. The build used here also includes components licensed under the <strong>GNU General Public License (GPL) version 2 or later</strong> (including x264 and x265), so the FFmpeg engine distributed by this site as a whole is licensed under the GPL version 2 or later. See the <a href="https://ffmpeg.org/legal.html">FFmpeg License and Legal Considerations</a> page.</p>
+        <ul>
+          <li>License text: <a href="{{base}}vendor/licenses/FFmpeg-COPYING.GPLv2.txt">GNU GPL v2</a> &middot; <a href="{{base}}vendor/licenses/FFmpeg-LICENSE.md.txt">FFmpeg LICENSE.md</a></li>
+          <li>FFmpeg source code (n5.1.4): <a href="https://github.com/FFmpeg/FFmpeg/tree/n5.1.4">github.com/FFmpeg/FFmpeg/tree/n5.1.4</a> &middot; <a href="https://ffmpeg.org/download.html">ffmpeg.org/download</a></li>
+          <li>Exact build scripts, patches and library sources used for the WebAssembly engine (@ffmpeg/core {{coreVersion}}): <a href="https://github.com/ffmpegwasm/ffmpeg.wasm/tree/v{{coreVersion}}">github.com/ffmpegwasm/ffmpeg.wasm/tree/v{{coreVersion}}</a></li>
+          <li>The compiled files served by this site: <a href="{{base}}vendor/ffmpeg-core/ffmpeg-core.js">ffmpeg-core.js</a>, <a href="{{base}}vendor/ffmpeg-core/ffmpeg-core.wasm">ffmpeg-core.wasm</a> (unmodified).</li>
+        </ul>
+        <p>If you would like a copy of the complete corresponding source code on physical media, contact <a href="mailto:{{contactEmail}}">{{contactEmail}}</a>; this offer is valid for three years from the date you obtained the software.</p>
+
+        <h2>ffmpeg.wasm</h2>
+        <p><a href="https://github.com/ffmpegwasm/ffmpeg.wasm">ffmpeg.wasm</a> (@ffmpeg/ffmpeg {{ffmpegWasmVersion}}) by Jerome Wu and contributors compiles FFmpeg to WebAssembly and provides the JavaScript interface used here. The JavaScript library is released under the <a href="{{base}}vendor/licenses/ffmpeg.wasm-LICENSE.txt">MIT License</a>.</p>
+
+        <h2>Libraries inside the engine</h2>
+        <p>The engine also includes x264 (GPL), x265 (GPL), libvpx (BSD), LAME (LGPL), libtheora, libvorbis and libogg (BSD), Opus (BSD), libwebp (BSD), zlib (zlib license), FreeType (FreeType License), FriBidi (LGPL), HarfBuzz (MIT), libass (ISC) and zimg (WTFPL). Their sources and the versions used are listed in the ffmpeg.wasm build files linked above.</p>
+      </article>

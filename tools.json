@@ -1,0 +1,163 @@
+{
+  "site": {
+    "name": "Local Media Converter",
+    "tagline": "Free video converters that run entirely in your browser",
+    "url": "https://example.com",
+    "basePath": "/",
+    "contactEmail": "contact@example.com",
+    "maxFileMB": 300
+  },
+  "groups": ["Video to GIF", "Video formats"],
+  "tools": [
+    {
+      "slug": "mp4-to-gif",
+      "group": "Video to GIF",
+      "navLabel": "MP4 to GIF",
+      "title": "MP4 to GIF Converter – Free, Private, No Upload",
+      "description": "Convert MP4 videos to high-quality animated GIFs in your browser. Trim the clip, pick width and frame rate. Your file never leaves your device.",
+      "h1": "MP4 to GIF Converter",
+      "lede": "Turn a clip from an MP4 video into a looping animated GIF, with optimised colours, right here in your browser.",
+      "converter": {
+        "input": {
+          "label": "MP4",
+          "extensions": ["mp4", "m4v"],
+          "mimeTypes": ["video/mp4", "video/x-m4v"]
+        },
+        "output": {
+          "label": "GIF",
+          "extension": "gif",
+          "mimeType": "image/gif",
+          "preview": "image"
+        },
+        "trim": true,
+        "settings": [
+          {
+            "id": "width",
+            "label": "Width",
+            "default": "480",
+            "options": [
+              { "value": "320", "label": "320 px (small)", "vars": { "scale": "scale='min(320,iw)':-2:flags=lanczos" } },
+              { "value": "480", "label": "480 px (recommended)", "vars": { "scale": "scale='min(480,iw)':-2:flags=lanczos" } },
+              { "value": "640", "label": "640 px", "vars": { "scale": "scale='min(640,iw)':-2:flags=lanczos" } },
+              { "value": "800", "label": "800 px (large)", "vars": { "scale": "scale='min(800,iw)':-2:flags=lanczos" } },
+              { "value": "original", "label": "Original size", "vars": { "scale": "scale=iw:-2" } }
+            ]
+          },
+          {
+            "id": "fps",
+            "label": "Frame rate",
+            "default": "12",
+            "options": [
+              { "value": "8", "label": "8 fps (smallest)" },
+              { "value": "10", "label": "10 fps" },
+              { "value": "12", "label": "12 fps (recommended)" },
+              { "value": "15", "label": "15 fps" },
+              { "value": "20", "label": "20 fps (smooth)" }
+            ]
+          },
+          {
+            "id": "quality",
+            "label": "Quality",
+            "default": "high",
+            "options": [
+              { "value": "high", "label": "High – 256 colours", "vars": { "colors": "256", "dither": "sierra2_4a" } },
+              { "value": "medium", "label": "Medium – 128 colours", "vars": { "colors": "128", "dither": "bayer:bayer_scale=3" } },
+              { "value": "low", "label": "Small file – 64 colours", "vars": { "colors": "64", "dither": "bayer:bayer_scale=4" } }
+            ]
+          }
+        ],
+        "passes": [
+          ["{trim}", "-i", "{input}", "-vf", "fps={fps},{scale},palettegen=max_colors={colors}:stats_mode=diff", "-y", "palette.png"],
+          ["{trim}", "-i", "{input}", "-i", "palette.png", "-lavfi", "fps={fps},{scale}[x];[x][1:v]paletteuse=dither={dither}:diff_mode=rectangle", "-loop", "0", "-y", "{output}"]
+        ],
+        "tip": "GIFs get big fast. A 3–6 second clip at 480 px and 12 fps is usually a few MB."
+      },
+      "content": [
+        {
+          "heading": "MP4 vs. GIF",
+          "html": "MP4 is a modern video container, usually holding H.264 video and AAC audio. It compresses motion very efficiently, so a minute of HD footage can be just a few megabytes. GIF is a 1980s image format that stores every frame as a picture limited to 256 colours, with no sound. It is far less efficient, but it plays automatically, loops forever and works almost everywhere an image is allowed: chat apps, forums, email, documentation and slide decks."
+        },
+        {
+          "heading": "When to use a GIF",
+          "html": "Choose GIF for short, silent loops: a reaction clip, a UI demo for a bug report or README, a product animation in an email newsletter, or anywhere that won't embed a video player. If the platform accepts video (most social networks do), keep the MP4 instead – it will look better and be a fraction of the size."
+        },
+        {
+          "heading": "How this converter keeps quality high",
+          "html": "Instead of using a generic colour table, the converter runs two passes. The first pass scans your clip and builds a custom 256-colour palette (<code>palettegen</code>); the second pass maps every frame onto that palette with dithering (<code>paletteuse</code>). This avoids the blotchy banding you often see in GIFs made by simpler tools, especially on skin tones, gradients and skies."
+        },
+        {
+          "heading": "Tips for smaller GIFs",
+          "html": "File size grows with width × height × frame count, so trimming is the most effective setting: use the start and end times to keep only the moment you need. 480 px wide and 10–12 fps look smooth enough for most uses. Busy, grainy footage compresses worse than flat screen recordings, so drop to the “Medium” or “Small file” quality if the result is too heavy for where you are posting it."
+        }
+      ]
+    },
+    {
+      "slug": "mov-to-mp4",
+      "group": "Video formats",
+      "navLabel": "MOV to MP4",
+      "title": "MOV to MP4 Converter – Free, Private, No Upload",
+      "description": "Convert iPhone and QuickTime MOV videos to widely compatible MP4 (H.264 + AAC) in your browser. Optional trim and resize. Nothing is uploaded.",
+      "h1": "MOV to MP4 Converter",
+      "lede": "Convert QuickTime and iPhone MOV videos into MP4 files that play on Windows, Android, smart TVs and every web browser.",
+      "converter": {
+        "input": {
+          "label": "MOV",
+          "extensions": ["mov", "qt"],
+          "mimeTypes": ["video/quicktime"]
+        },
+        "output": {
+          "label": "MP4",
+          "extension": "mp4",
+          "mimeType": "video/mp4",
+          "preview": "video"
+        },
+        "trim": true,
+        "settings": [
+          {
+            "id": "width",
+            "label": "Resolution",
+            "default": "original",
+            "options": [
+              { "value": "original", "label": "Keep original", "vars": { "scale": "scale=trunc(iw/2)*2:trunc(ih/2)*2" } },
+              { "value": "1920", "label": "1080p (1920 px wide)", "vars": { "scale": "scale='trunc(min(1920,iw)/2)*2':-2:flags=bicubic" } },
+              { "value": "1280", "label": "720p (1280 px wide)", "vars": { "scale": "scale='trunc(min(1280,iw)/2)*2':-2:flags=bicubic" } },
+              { "value": "854", "label": "480p (854 px wide)", "vars": { "scale": "scale='trunc(min(854,iw)/2)*2':-2:flags=bicubic" } }
+            ]
+          },
+          {
+            "id": "quality",
+            "label": "Quality",
+            "default": "balanced",
+            "options": [
+              { "value": "high", "label": "High (larger file)", "vars": { "crf": "20" } },
+              { "value": "balanced", "label": "Balanced (recommended)", "vars": { "crf": "23" } },
+              { "value": "small", "label": "Smaller file", "vars": { "crf": "28" } }
+            ]
+          }
+        ],
+        "passes": [
+          ["{trim}", "-i", "{input}", "-map", "0:v:0", "-map", "0:a:0?", "-vf", "{scale}", "-c:v", "libx264", "-preset", "veryfast", "-crf", "{crf}", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", "-y", "{output}"]
+        ],
+        "tip": "Conversion runs on your device's processor, so long 4K videos take a while. Choose 720p for a much faster conversion and a smaller file."
+      },
+      "content": [
+        {
+          "heading": "MOV vs. MP4",
+          "html": "MOV is Apple's QuickTime container and the default format for iPhone, iPad and many cameras and screen recorders. MP4 is the international standard (MPEG-4 Part 14) built on the same foundations. Both are only “boxes” – what matters is the video codec inside. iPhones usually record HEVC (H.265), which many Windows PCs, Android phones, older TVs and web browsers can't play without extra software."
+        },
+        {
+          "heading": "When to convert",
+          "html": "Convert to MP4 when you need a video to “just work”: uploading to a website or LMS that rejects MOV, sharing with someone on Windows or Android, editing in software that doesn't support HEVC, or embedding on a web page. If you're staying inside the Apple ecosystem (Photos, iMovie, AirDrop to another iPhone), the original MOV is fine and slightly higher quality."
+        },
+        {
+          "heading": "What this converter produces",
+          "html": "The output is H.264 video with AAC audio in an MP4 container – the most compatible combination there is. It uses the standard 8-bit colour format (yuv420p) that every player supports and moves the index to the start of the file (“fast start”), so the video begins playing online before it has fully downloaded. Phone rotation is applied automatically, so portrait videos stay upright."
+        },
+        {
+          "heading": "Tips",
+          "html": "Everything is processed on your own device, so speed depends on your computer: a one-minute 1080p clip typically takes a minute or two on a modern laptop, longer on a phone. Use “720p” or trim the clip for faster results. “Balanced” quality is visually indistinguishable from the original for most footage. HDR (Dolby Vision) clips from recent iPhones are saved as a standard, non-HDR MP4 without tone-mapping, so colours may look slightly washed out compared with the phone screen; if that matters, turn off HDR video in the Camera settings before recording."
+        }
+      ]
+    }
+  ]
+}
