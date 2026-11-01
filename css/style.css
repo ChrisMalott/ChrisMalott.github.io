@@ -227,6 +227,7 @@ h2 { font-size: 1.2rem; margin: 1.75rem 0 .4rem; }
   background-size: 20px 20px; background-position: 0 0, 10px 10px;
 }
 .result__preview img, .result__preview video { max-height: 420px; border-radius: 6px; }
+.result__preview audio { width: 100%; max-width: 480px; }
 .result p { margin: 0; overflow-wrap: anywhere; }
 .result__actions { display: flex; flex-wrap: wrap; gap: 10px; }
 

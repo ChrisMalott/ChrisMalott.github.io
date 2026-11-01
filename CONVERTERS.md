@@ -6,7 +6,7 @@ Static site of single-purpose converters powered by ffmpeg.wasm (single-thread c
 
 | Path | What it is |
 |---|---|
-| `tools.json` | Site settings + the list of tools (config, page text). Add a tool here. |
+| `tools.json` | Site settings + the list of tools (config, page text). Add a tool here. `output.preview` is `image`, `video` or `audio`. |
 | `build.js` | Generator: `node build.js` writes everything to `dist/`. |
 | `js/converter.js` | The shared engine + UI. Lazily loads FFmpeg on Convert. |
 | `css/style.css` | Shared styles. |

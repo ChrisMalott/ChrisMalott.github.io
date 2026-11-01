@@ -7,11 +7,11 @@
     "contactEmail": "contact@example.com",
     "maxFileMB": 300
   },
-  "groups": ["Video to GIF", "Video formats"],
+  "groups": ["GIF", "Video formats", "Audio"],
   "tools": [
     {
       "slug": "mp4-to-gif",
-      "group": "Video to GIF",
+      "group": "GIF",
       "navLabel": "MP4 to GIF",
       "title": "MP4 to GIF Converter – Free, Private, No Upload",
       "description": "Convert MP4 videos to high-quality animated GIFs in your browser. Trim the clip, pick width and frame rate. Your file never leaves your device.",
@@ -156,6 +156,177 @@
         {
           "heading": "Tips",
           "html": "Everything is processed on your own device, so speed depends on your computer: a one-minute 1080p clip typically takes a minute or two on a modern laptop, longer on a phone. Use “720p” or trim the clip for faster results. “Balanced” quality is visually indistinguishable from the original for most footage. HDR (Dolby Vision) clips from recent iPhones are saved as a standard, non-HDR MP4 without tone-mapping, so colours may look slightly washed out compared with the phone screen; if that matters, turn off HDR video in the Camera settings before recording."
+        }
+      ]
+    },
+    {
+      "slug": "mp4-to-mp3",
+      "group": "Audio",
+      "navLabel": "MP4 to MP3",
+      "title": "MP4 to MP3 Converter – Extract Audio, No Upload",
+      "description": "Extract the audio from an MP4 video and save it as an MP3 at 128, 192 or 320 kbps. Runs in your browser – your video is never uploaded.",
+      "h1": "MP4 to MP3 Converter",
+      "lede": "Pull the soundtrack out of an MP4 video and save it as an MP3 that plays on any phone, car stereo or music app.",
+      "converter": {
+        "input": {
+          "label": "MP4",
+          "extensions": ["mp4", "m4v", "m4a"],
+          "mimeTypes": ["video/mp4", "video/x-m4v", "audio/mp4", "audio/x-m4a"]
+        },
+        "output": {
+          "label": "MP3",
+          "extension": "mp3",
+          "mimeType": "audio/mpeg",
+          "preview": "audio"
+        },
+        "trim": true,
+        "settings": [
+          {
+            "id": "bitrate",
+            "label": "Quality",
+            "default": "192",
+            "options": [
+              { "value": "128", "label": "128 kbps (speech, podcasts)", "vars": { "abr": "128k" } },
+              { "value": "192", "label": "192 kbps (recommended)", "vars": { "abr": "192k" } },
+              { "value": "320", "label": "320 kbps (maximum)", "vars": { "abr": "320k" } }
+            ]
+          }
+        ],
+        "passes": [
+          ["{trim}", "-i", "{input}", "-map", "0:a:0", "-vn", "-c:a", "libmp3lame", "-b:a", "{abr}", "-id3v2_version", "3", "-y", "{output}"]
+        ],
+        "tip": "Audio-only conversion is fast: most videos take a few seconds, because the picture is skipped entirely."
+      },
+      "content": [
+        {
+          "heading": "MP4 vs. MP3",
+          "html": "An MP4 file is a container that usually holds a video track plus an audio track (normally AAC). MP3 is an audio-only format, and the most widely supported one there is: it plays in every browser, phone, music app, car stereo, smart speaker and old MP3 player. Converting MP4 to MP3 throws away the picture and keeps just the sound, so the file is a small fraction of the video's size."
+        },
+        {
+          "heading": "When to extract the audio",
+          "html": "Use this for recorded lectures, interviews, meetings, podcasts recorded on camera, voice memos saved as video, or a performance you want to listen to without the screen on. If you're keeping the audio inside the Apple ecosystem, the original AAC track is slightly more efficient – but if you need it to “just play” everywhere, MP3 is the safe choice."
+        },
+        {
+          "heading": "Choosing a bitrate",
+          "html": "Bitrate sets how much data is used per second of sound. 128 kbps is plenty for speech and keeps files small (about 1 MB per minute). 192 kbps is a good default for music and sounds transparent to most listeners (about 1.4 MB per minute). 320 kbps is the MP3 maximum (about 2.4 MB per minute); use it for music you care about, but note it can't add back detail the original video's audio didn't have."
+        },
+        {
+          "heading": "Tips",
+          "html": "Use the start and end times to grab just one song or answer from a long recording. The audio is re-encoded once, so for the best result convert from the original video rather than from a copy that has been through messaging apps. If you get a “no audio track” message, the video was recorded or exported without sound."
+        }
+      ]
+    },
+    {
+      "slug": "webm-to-mp4",
+      "group": "Video formats",
+      "navLabel": "WebM to MP4",
+      "title": "WebM to MP4 Converter – Free, Private, No Upload",
+      "description": "Convert WebM videos (VP8/VP9, Opus) to MP4 with H.264 and AAC so they play on iPhone, Windows and in video editors. Runs locally in your browser.",
+      "h1": "WebM to MP4 Converter",
+      "lede": "Turn WebM screen recordings and downloads into MP4 files that play on iPhones, in PowerPoint and in every video editor.",
+      "converter": {
+        "input": {
+          "label": "WebM",
+          "extensions": ["webm"],
+          "mimeTypes": ["video/webm", "audio/webm"]
+        },
+        "output": {
+          "label": "MP4",
+          "extension": "mp4",
+          "mimeType": "video/mp4",
+          "preview": "video"
+        },
+        "trim": true,
+        "settings": [
+          {
+            "id": "quality",
+            "label": "Quality",
+            "default": "balanced",
+            "options": [
+              { "value": "small", "label": "Smaller file", "vars": { "crf": "28" } },
+              { "value": "balanced", "label": "Balanced (recommended)", "vars": { "crf": "23" } },
+              { "value": "high", "label": "Higher quality", "vars": { "crf": "20" } }
+            ]
+          }
+        ],
+        "passes": [
+          ["{trim}", "-i", "{input}", "-map", "0:v:0", "-map", "0:a:0?", "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2", "-c:v", "libx264", "-preset", "veryfast", "-crf", "{crf}", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", "-y", "{output}"]
+        ],
+        "tip": "Conversion runs on your device's processor. Screen recordings convert quickly; long HD videos take a few minutes."
+      },
+      "content": [
+        {
+          "heading": "WebM vs. MP4",
+          "html": "WebM is an open, royalty-free video format from Google, using the VP8 or VP9 (sometimes AV1) video codecs with Vorbis or Opus audio. It's what you get from many screen recorders, browser recording tools, OBS presets and some downloaders. MP4 with H.264 video and AAC audio is the most compatible combination in existence: it plays on iPhones and iPads, in QuickTime, PowerPoint and Keynote, on TVs and in virtually every editing program."
+        },
+        {
+          "heading": "When to convert",
+          "html": "Convert when a WebM won't open where you need it: an iPhone or older Mac, a video editor such as iMovie or Premiere that refuses the file, a presentation, a learning platform, or a site that only accepts MP4 uploads. If the video is only going to be played on a website in a modern browser, WebM is fine as it is – browsers all support it."
+        },
+        {
+          "heading": "What this converter produces",
+          "html": "Video is re-encoded to H.264 with the standard 8-bit yuv420p colour format, which phones, TVs and hardware players require; audio becomes AAC. Width and height are rounded down to even numbers if needed (H.264 requires it), and the index is placed at the start of the file so it streams immediately. Transparency in WebM files (used for stickers and overlays) is not supported by H.264 and will be lost."
+        },
+        {
+          "heading": "Picking a quality",
+          "html": "“Balanced” (CRF 23) looks the same as the source for most material. Screen recordings with lots of flat colour compress very well, so “Smaller file” is often indistinguishable for tutorials and demos. Choose “Higher quality” for camera footage with fine detail. Converting can't improve quality: the MP4 will be at best as sharp as the WebM you start with, and is often a little larger, because VP9 is a more efficient codec than H.264."
+        }
+      ]
+    },
+    {
+      "slug": "gif-to-mp4",
+      "group": "GIF",
+      "navLabel": "GIF to MP4",
+      "title": "GIF to MP4 Converter – Shrink Animated GIFs, No Upload",
+      "description": "Convert animated GIFs to MP4 (H.264) videos that are often 5–20× smaller and post anywhere. Runs entirely in your browser; nothing is uploaded.",
+      "h1": "GIF to MP4 Converter",
+      "lede": "Turn an animated GIF into an MP4 video that's typically a small fraction of the size, ready for Instagram, websites and messaging apps.",
+      "converter": {
+        "input": {
+          "label": "GIF",
+          "extensions": ["gif"],
+          "mimeTypes": ["image/gif"]
+        },
+        "output": {
+          "label": "MP4",
+          "extension": "mp4",
+          "mimeType": "video/mp4",
+          "preview": "video"
+        },
+        "trim": true,
+        "settings": [
+          {
+            "id": "quality",
+            "label": "Quality",
+            "default": "balanced",
+            "options": [
+              { "value": "small", "label": "Smaller file", "vars": { "crf": "28" } },
+              { "value": "balanced", "label": "Balanced (recommended)", "vars": { "crf": "23" } },
+              { "value": "high", "label": "Higher quality", "vars": { "crf": "18" } }
+            ]
+          }
+        ],
+        "passes": [
+          ["{trim}", "-i", "{input}", "-map", "0:v:0", "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2", "-c:v", "libx264", "-preset", "veryfast", "-crf", "{crf}", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-an", "-y", "{output}"]
+        ],
+        "tip": "GIFs have no sound, so the MP4 is silent. Most social apps will still loop a short MP4 automatically."
+      },
+      "content": [
+        {
+          "heading": "GIF vs. MP4",
+          "html": "GIF is a 1987 image format that can hold a sequence of frames, each limited to 256 colours, with no sound. MP4 is a modern video format; here it holds H.264 video, the codec used by nearly every phone, browser and streaming service. Both can show the same short loop, but they store it in completely different ways."
+        },
+        {
+          "heading": "Why the MP4 is so much smaller",
+          "html": "A GIF saves every frame as its own picture, compressed only with simple lossless LZW compression, so 10 seconds of animation is essentially hundreds of separate images. H.264 compresses <em>motion</em>: it stores an occasional full frame and, for the frames in between, only what changed – which blocks moved and by how much. It also uses lossy compression tuned to what the eye actually notices. The result is commonly 5 to 20 times smaller than the GIF, and it can show millions of colours instead of 256, so gradients look smooth rather than speckled."
+        },
+        {
+          "heading": "When to use each",
+          "html": "Keep the GIF where only images are allowed: email newsletters, some forums, GitHub READMEs and older chat tools. Use MP4 everywhere video works – Instagram and TikTok (which reject GIF uploads), websites (an autoplaying, muted, looping <code>&lt;video&gt;</code> loads far faster than a big GIF), slide decks and messaging apps. Your page speed, and your visitors' data plans, will thank you."
+        },
+        {
+          "heading": "Tips",
+          "html": "H.264 needs even dimensions, so a GIF that's 501 × 301 px becomes 500 × 300 – a single pixel row or column is trimmed, nothing is stretched. Transparent areas become black, because MP4 has no transparency. Very small GIFs (under ~100 KB, a few frames) may not shrink much, as the MP4 container has a little fixed overhead. Choose “Higher quality” for pixel-art or text-heavy animations, which show compression artefacts more easily."
         }
       ]
     }

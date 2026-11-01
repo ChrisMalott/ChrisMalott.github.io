@@ -9,7 +9,7 @@
  *   by build.js from tools.json:
  *     {
  *       input:  { label, extensions[], mimeTypes[] },
- *       output: { label, extension, mimeType, preview: "image" | "video" },
+ *       output: { label, extension, mimeType, preview: "image" | "video" | "audio" },
  *       trim: true,                        // show start/end time fields
  *       settings: [{ id, options: [{ value, vars? }] }],  // width, fps, quality…
  *       passes: [[ "...ffmpeg args with {placeholders}..." ], ...],
@@ -171,7 +171,8 @@ function explainFailure(logText, cfg, err) {
     return 'This file uses a video or audio format' + (dec[1] ? ' (' + dec[1] + ')' : '') + ' that the in-browser converter can’t decode.';
   }
   if (/matches no streams|does not contain any stream|Output file is empty|nothing was encoded/i.test(L) || /empty-output/.test(errMsg)) {
-    return 'No video was produced. Check that the file actually contains a video track, and that the start time is before the end of the video.';
+    const track = cfg.output.preview === 'audio' ? 'an audio track' : 'a video track';
+    return 'No ' + cfg.output.label + ' was produced. Check that the file actually contains ' + track + ', and that the start time is before the end of the video.';
   }
   // Note: ffmpeg.wasm prints "Aborted()" after *every* failed run, so it is not a memory signal on its own.
   if (/Cannot allocate memory|out of memory|OOM|memory access out of bounds|Array buffer allocation failed/i.test(L + ' ' + errMsg)) {
@@ -505,11 +506,11 @@ function init() {
     resultURL = URL.createObjectURL(out.blob);
     els.preview.textContent = '';
     let media;
-    if (cfg.output.preview === 'video') {
-      media = document.createElement('video');
+    if (cfg.output.preview === 'video' || cfg.output.preview === 'audio') {
+      media = document.createElement(cfg.output.preview);
       media.controls = true;
-      media.playsInline = true;
       media.preload = 'metadata';
+      if (cfg.output.preview === 'video') media.playsInline = true;
     } else {
       media = document.createElement('img');
       media.alt = 'Preview of the converted ' + cfg.output.label;
